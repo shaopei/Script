@@ -3,7 +3,7 @@
 #arguments here
 args=(commandArgs(TRUE))
 setwd(args[1])
-input_f = args[2]
+input_f = args[2] #GM12878_GroSeq_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1.txt
 dummy = 1
 
 # code start
@@ -12,9 +12,9 @@ Strand_count = read.table(input_f,header=T,sep = "\t")
 original_col_number = dim(Strand_count)[2]
 summary(Strand_count)
 Con_col_1 = 'blue'
-Con_col_2 = 'darkgreen'
+#Con_col_2 = 'darkgreen'
 Dis_col_1 ='dark orange'
-Dis_col_2 = 'dark red'
+#Dis_col_2 = 'dark red'
 filter_out_col = 'black'
 
 Strand_count$log_mat_over_pat_plus = with(Strand_count,log2((mat_count_plus+dummy)/(pat_count_plus+dummy)))
@@ -52,6 +52,8 @@ abline(a=0, b=1/2^(1.5), col='blue', lty=2)
 sub = (Strand_count$log2_minus_over_plus < -1.5) | (Strand_count$log2_minus_over_plus > 1.5) & (Strand_count$Groseq.Discordance == 'Concordant')
 with(Strand_count, points(log_mat_over_pat_plus[sub], log_mat_over_pat_minus[sub],  
                                col= filter_out_col, pch=20))
+legend("topright", legend = c(paste("Concordant (n=",c-f,")",sep=""), paste("Discordant  (n=",d,")",sep="")), col = c(Con_col_1, Dis_col_1),
+       pch=20)
 dev.off()
 
 # export the input file with region pass filter
