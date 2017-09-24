@@ -11,11 +11,11 @@ dummy = 1
 Strand_count = read.table(input_f,header=T,sep = "\t")
 original_col_number = dim(Strand_count)[2]
 summary(Strand_count)
-Con_col_1 = 'blue'
-#Con_col_2 = 'darkgreen'
+Con_col_1 = 'springgreen4'
+#Con_col_2 = 'blue'
 Dis_col_1 ='dark orange'
 #Dis_col_2 = 'dark red'
-filter_out_col = 'black'
+filter_out_col = 'gray77'
 
 Strand_count$log_mat_over_pat_plus = with(Strand_count,log2((mat_count_plus+dummy)/(pat_count_plus+dummy)))
 Strand_count$log_mat_over_pat_minus = with(Strand_count, log2((mat_count_minus+dummy)/(pat_count_minus+dummy)))
@@ -46,8 +46,8 @@ with(Strand_count, plot(log_mat_over_pat_plus, log_mat_over_pat_minus,
                              pch=20,frame.plot=FALSE, main = paste('dummy=',dummy)))
 abline(v=0)
 abline(h=0)
-abline(a=0, b=2^(1.5), col='blue',lty=2)
-abline(a=0, b=1/2^(1.5), col='blue', lty=2)
+abline(a=0, b=2^(1.5), col=Con_col_1,lty=2)
+abline(a=0, b=1/2^(1.5), col=Con_col_1, lty=2)
 # color the filter out points
 sub = (Strand_count$log2_minus_over_plus < -1.5) | (Strand_count$log2_minus_over_plus > 1.5) & (Strand_count$Groseq.Discordance == 'Concordant')
 with(Strand_count, points(log_mat_over_pat_plus[sub], log_mat_over_pat_minus[sub],  
