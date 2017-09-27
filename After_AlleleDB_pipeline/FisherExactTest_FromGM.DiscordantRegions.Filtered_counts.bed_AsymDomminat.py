@@ -107,4 +107,3 @@ with open('Fisher_excat_test.txt' ,'w') as out:
                 out.write('\t'.join(str(s) for s in [f,ExperimentAcc_Target_dic[f], f, s_oddsratio, s_pvalue, Dis_Asym, Dis_Sym,Con_Asym, Con_Sym, Dis_NA, Con_NA])+'\n')
             except KeyError:
                 out.write('\t'.join(str(s) for s in [f,f, f, s_oddsratio, s_pvalue, Dis_Asym, Dis_Sym,Con_Asym, Con_Sym, Dis_NA, Con_NA])+'\n')
-
