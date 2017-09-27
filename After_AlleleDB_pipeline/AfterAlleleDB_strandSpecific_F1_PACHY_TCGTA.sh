@@ -55,33 +55,41 @@ R --vanilla --slave --args $(pwd) ${new_name} < ${PL}/Con_Dis_scatterplot.R
 # Motif analysis #
 ##################
 mkdir Motif_SNPs_Anaylsis
+# identify SNPs overlap with Concordant or Discordant regions
 intersectBed -wa -a /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed -b ${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.bed > Motif_SNPs_Anaylsis/${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.snp.bed  
 
 cd Motif_SNPs_Anaylsis
 grep Concordant ../${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.bed > Concordant.bed
 grep Discordant ../${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.bed > Discordant.bed
 
+# use rtfbsdb to scan the concrdant and discordant region for motif
 R --vanilla --slave --args $(pwd) ../${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.bed < ${PL}/rtfbsdb_scan.R
 
-# SNPs overlap with Concordant or Discordant regions
-for tf in `cat tfbs.scanTFsite.summary |awk '{print $3}'|sort |uniq`
+
+for tf in `cat tfbs.scanTFsite.summary |awk '(NR>1){print $3}'|sort |uniq`
 do
   # a specific TF
   for motif in  `grep $tf tfbs.scanTFsite.summary | awk '{print $2}' `
-  do unstarch scan.db.db.starch |grep ${motif} >> tfbs.scanTFsite_${tf}
+    do unstarch scan.db.db.starch |grep ${motif} >> tfbs.scanTFsite_${tf}
   done
-# TF binding sites overlap with SNPs
-# duplicate of binding sites due to more than one SNP is a region
-intersectBed -wa -a tfbs.scanTFsite_${tf} -b ${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.snp.bed > tfbs.scanTFsite_${tf}_wSNP.bed
-
-echo ${tf} >> TF_SNP_Motif_count
-intersectBed -wa -wb -a tfbs.scanTFsite_${tf}_wSNP.bed -b Discordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
-intersectBed -wa -wb -a tfbs.scanTFsite_${tf} -b Discordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
-intersectBed -wa -wb -a tfbs.scanTFsite_${tf}_wSNP.bed -b Concordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
-intersectBed -wa -wb -a tfbs.scanTFsite_${tf} -b Concordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
+  # identify motif sites overlap with SNPs
+  # might have duplicates of binding sites due to more than one SNP is a region, but this will be taken care later in the pipeline
+  intersectBed -wa -a tfbs.scanTFsite_${tf} -b ${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.snp.bed > tfbs.scanTFsite_${tf}_wSNP.bed
+  
+  # calculate Dis_SNP, Dis_Motif,Con_SNP, Con_Motif
+  echo ${tf} >> TF_SNP_Motif_count
+  # Dis_SNP, the number of Discordant regions with motif(s) that overlaps with SNP
+  intersectBed -wa -wb -a tfbs.scanTFsite_${tf}_wSNP.bed -b Discordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
+  # Dis_Motif, the number of Discordant regions with motif(s) (with or without SNP)
+  intersectBed -wa -wb -a tfbs.scanTFsite_${tf} -b Discordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
+  # Con_SNP, the number of Concordant regions with motif(s) that overlaps with SNP
+  intersectBed -wa -wb -a tfbs.scanTFsite_${tf}_wSNP.bed -b Concordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
+  # Con_Motif, the number of Concordant regions with motif(s) (with or without SNP)
+  intersectBed -wa -wb -a tfbs.scanTFsite_${tf} -b Concordant.bed | awk '{print $9, $10, $11, $12}' |sort |uniq |wc -l >> TF_SNP_Motif_count
 done
 
 mkdir toremove
+mv Concordant.bed Discordant.bed toremove/.
 mv tfbs.scanTFsite_* toremove/.
 
 python ${PL}/FisherExactTest_Motif_SNPs.py TF_SNP_Motif_count
