@@ -80,3 +80,4 @@ mkdir toremove
 mv tfbs.scanTFsite_* toremove/.
 
 python ${PL}/FisherExactTest_Motif_SNPs.py TF_SNP_Motif_count
+R --vanilla --slave --args $(pwd) Fisher_excat_test.txt < ${PL}/FisherExactTest_Motif_SNPs_volcano.R 

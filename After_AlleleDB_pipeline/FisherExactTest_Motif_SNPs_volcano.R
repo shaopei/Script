@@ -4,6 +4,7 @@
 args=(commandArgs(TRUE))
 setwd(args[1])
 input_f = args[2]
+num_of_TF = 924
 
 data = read.table(input_f, header = T,sep = "\t")
 
@@ -13,10 +14,10 @@ colnames(data)[3] = 'pvalue'
 # Make a basic volcano plot
 pdf(paste(input_f,'volcanoPlot.pdf', sep='_'))
 with(data, plot(log2(oddsratio), -log10(pvalue), 
-                   pch=20, frame.plot=FALSE, cex=-log10(pvalue),ylim=c(0,3.5)))
+                   pch=20, frame.plot=FALSE, cex=-log10(pvalue),ylim=c(0,max(ceiling(-log10(0.05/num_of_TF)),max(-log10(pvalue))))))
 abline(v=0)
 abline(h=-log10(0.05), col='blue',lty=2, lwd=2)
-abline(h=-log10(0.05/924), col='red',lty=2, lwd=2)
+abline(h=-log10(0.05/num_of_TF), col='red',lty=2, lwd=2)
 
 # Add colored points: red if padj<0.05, orange of log2FC>1, green if both)
 #with(subset(data, pvalue<.1 & oddsratio > 1 ), points(log2(oddsratio), -log10(pvalue), pch=20, col='dark orange', cex=-log10(pvalue)))
@@ -28,5 +29,6 @@ legend("topright", legend = c("Enriched in Concordant", "Enriched in Discordant"
        pch=20)
 
 # Label points with the textxy function from the calibrate plot
-with(subset(data, pvalue<.1), 
+with(subset(data, pvalue<.05), 
      text(log2(oddsratio), -log10(pvalue), labels= TF_name, cex=1, pos= 3))
+dev.off()
