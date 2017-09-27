@@ -11,6 +11,11 @@ dRegion=250
 
 #locations of pipeline
 PL=/workdir/sc2457/tools/After_AlleleDB_pipeline
+
+# input files
+plus_input_file=interestingHets_plus.txt
+minus_input_file=interestingHets_minus.txt
+
 # locations of dREG results
 dREG_dir=/workdir/sc2457/mouse_AlleleSpecific/${sample_name}.dREG
 zcat  ${dREG_dir}/out.dREG.peak.full.bed.gz | awk 'BEGIN{OFS="\t"} {print $1, $7, $3, $4,$5, "+"}' > tss_paired_${sample_name}_dREG_plus.bed
@@ -20,10 +25,7 @@ tss_plus_f=tss_paired_${sample_name}_dREG_plus.bed
 tss_minus_f=tss_paired_${sample_name}_dREG_minus.bed
 
 
-# input files
-plus_input_file=interestingHets_plus.txt
-minus_input_file=interestingHets_minus.txt
-
+# only anaysis autosome now
 grep -v X ${plus_input_file} > ${plus_input_file:0:-4}_noX
 grep -v X ${minus_input_file} > ${minus_input_file:0:-4}_noX
 
@@ -33,7 +35,7 @@ grep -v X ${minus_input_file} > ${minus_input_file:0:-4}_noX
 R --vanilla --slave --args $(pwd) ${plus_input_file:0:-4}_noX ${Min_count} ${Max_Pvalus} < ${PL}/filter_counts_file.R 
 R --vanilla --slave --args $(pwd) ${minus_input_file:0:-4}_noX ${Min_count} ${Max_Pvalus} < ${PL}/filter_counts_file.R 
 
-# identify Concordant and Discordant regions with defined d and dRegion
+###### identify Concordant and Discordant regions with defined d and dRegion ######
 # d is the length to identify ASE SNPs from each TSS. For plus TSS, the beginning of TSS(+20nt?) to that +d
 # dRegion (the length to keep in the Con_Dis regions), the legnth of the regions is (dRegion + distance_between_TSS + dRegion)
 new_name=${sample_name}_d${d}_dRegion${dRegion}_withStrandSpecific_MinCount${Min_count}_MaxPvalue${Max_Pvalus}.txt
@@ -49,6 +51,9 @@ R --vanilla --slave --args $(pwd) ${new_name} < ${PL}/Con_Dis_scatterplot.R
 #GM12878_GroSeq_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.bed
 
 
+##################
+# Motif analysis #
+##################
 mkdir Motif_SNPs_Anaylsis
 intersectBed -wa -a /workdir/sc2457/mouse_AlleleSpecific/mouse_genome.sanger.ac.uk/REL-1505-SNPs_Indels/PersonalGenome_P.CAST_M.B6_indelsNsnps_CAST.bam/P.CAST_M.B6_indelsNsnps_CAST.bam.alleleDBInput.snp.bed -b ${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.bed > Motif_SNPs_Anaylsis/${sample_name}_d150_dRegion250_withStrandSpecific_MinCount5_MaxPvalue1_ConFiltered.snp.bed  
 
