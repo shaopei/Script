@@ -1,0 +1,32 @@
+# R --vanilla --slave --args $(pwd) Fisher_excat_test.txt < FisherExactTest_Motif_SNPs_vocano.R 
+
+#arguments here
+args=(commandArgs(TRUE))
+setwd(args[1])
+input_f = args[2]
+
+data = read.table(input_f, header = T,sep = "\t")
+
+colnames(data)[2] = 'oddsratio'
+colnames(data)[3] = 'pvalue'
+
+# Make a basic volcano plot
+pdf(paste(input_f,'volcanoPlot.pdf', sep='_'))
+with(data, plot(log2(oddsratio), -log10(pvalue), 
+                   pch=20, frame.plot=FALSE, cex=-log10(pvalue),ylim=c(0,3.5)))
+abline(v=0)
+abline(h=-log10(0.05), col='blue',lty=2, lwd=2)
+abline(h=-log10(0.05/924), col='red',lty=2, lwd=2)
+
+# Add colored points: red if padj<0.05, orange of log2FC>1, green if both)
+#with(subset(data, pvalue<.1 & oddsratio > 1 ), points(log2(oddsratio), -log10(pvalue), pch=20, col='dark orange', cex=-log10(pvalue)))
+#with(subset(data, pvalue<.1 & oddsratio < 1 ), points(log2(oddsratio), -log10(pvalue), pch=20, col='dark green', cex=-log10(pvalue)))
+
+with(subset(data,  oddsratio > 1 ), points(log2(oddsratio), -log10(pvalue), pch=20, col='dark orange', cex=-log10(pvalue)))
+with(subset(data,  oddsratio < 1 ), points(log2(oddsratio), -log10(pvalue), pch=20, col='dark green', cex=-log10(pvalue)))
+legend("topright", legend = c("Enriched in Concordant", "Enriched in Discordant"), col = c('dark green', 'dark orange'),
+       pch=20)
+
+# Label points with the textxy function from the calibrate plot
+with(subset(data, pvalue<.1), 
+     text(log2(oddsratio), -log10(pvalue), labels= TF_name, cex=1, pos= 3))

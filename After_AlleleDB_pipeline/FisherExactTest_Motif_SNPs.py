@@ -10,6 +10,7 @@ with open('Fisher_excat_test.txt' ,'w') as out:
     with open(input_fp, 'U') as f:
         while True:
             tf = f.readline().strip()
+            if not tf: break
             Dis_SNP = int(f.readline().strip())
             Dis_Motif = int(f.readline().strip())
             Con_SNP = int(f.readline().strip())
@@ -17,4 +18,4 @@ with open('Fisher_excat_test.txt' ,'w') as out:
             s_oddsratio, s_pvalue = stats.fisher_exact([[Dis_SNP, Dis_Motif],[Con_SNP, Con_Motif]])
             print tf, s_oddsratio, s_pvalue, Dis_SNP, Dis_Motif,Con_SNP, Con_Motif
             out.write('\t'.join(str(s) for s in [tf, s_oddsratio, s_pvalue, Dis_SNP, Dis_Motif,Con_SNP, Con_Motif])+'\n')
-            if not tf: break
+            
