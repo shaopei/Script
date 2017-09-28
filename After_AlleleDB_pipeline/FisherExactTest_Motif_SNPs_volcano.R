@@ -4,9 +4,9 @@
 args=(commandArgs(TRUE))
 setwd(args[1])
 input_f = args[2]
-num_of_TF = 924
 
 data = read.table(input_f, header = T,sep = "\t")
+num_of_TF = dim(data)[1]
 
 colnames(data)[2] = 'oddsratio'
 colnames(data)[3] = 'pvalue'
@@ -14,7 +14,9 @@ colnames(data)[3] = 'pvalue'
 # Make a basic volcano plot
 pdf(paste(input_f,'volcanoPlot.pdf', sep='_'))
 with(data, plot(log2(oddsratio), -log10(pvalue), 
-                   pch=20, frame.plot=FALSE, cex=-log10(pvalue),ylim=c(0,max(ceiling(-log10(0.05/num_of_TF)),max(-log10(pvalue))))))
+                   pch=20, frame.plot=FALSE, cex=-log10(pvalue),ylim=c(0,max(ceiling(-log10(0.05/num_of_TF)),max(-log10(pvalue))))
+                   xlim=c(min(-3,min(log2(oddsratio))),max(3,max(log2(oddsratio)))
+                   ))
 abline(v=0)
 abline(h=-log10(0.05), col='blue',lty=2, lwd=2)
 abline(h=-log10(0.05/num_of_TF), col='red',lty=2, lwd=2)
