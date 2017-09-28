@@ -42,8 +42,8 @@ file.twoBit <- "/local/storage/data/mm10/mm10.2bit"
 Con_Dis_bed <- read.table(input_f, header=F);
 
 # Scan 2bit file within all bed regions to find motif binding sites
-r2.scan <- tfbs.scanTFsite( tfs, file.twoBit, Con_Dis_bed, return.type="writedb", ncores = 7);
-r3.scan <- tfbs.scanTFsite( tfs, file.twoBit, Con_Dis_bed, ncores = 20);
+r2.scan <- tfbs.scanTFsite( tfs, file.twoBit, Con_Dis_bed, return.type="writedb", threshold=7, ncores = 20);
+r3.scan <- tfbs.scanTFsite( tfs, file.twoBit, Con_Dis_bed, threshold=7, ncores = 20);
 
 #output
 write.table(r3.scan$summary, "tfbs.scanTFsite.summary", sep="\t",quote = F)
