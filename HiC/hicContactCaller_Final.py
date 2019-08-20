@@ -1,4 +1,5 @@
 import sys
+import time
 import statsmodels.stats.multitest as mt
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import IntVector as ivect
@@ -8,10 +9,10 @@ import rpy2
 mass = importr('MASS')
 stats = importr('stats')
 base = importr('base')
-
-peakFile = sys.argv[1] # File of "bait" peaks to analyze (format: Chromosome <\t> peak-center-position)
-tssFile = sys.argv[2] # File of "prey" TSSs to analyze (format: Chromosome <\t> TSS-center-position)
-conFile = sys.argv[3] # Contact file in juicer short format 
+    
+peakFile = "TRE_file_chr_22.txt" #sys.argv[1] # File of "bait" peaks to analyze (format: Chromosome <\t> peak-center-position)
+tssFile = "promoter_file_chr_22.txt"  # sys.argv[2] # File of "prey" TSSs to analyze (format: Chromosome <\t> TSS-center-position)
+conFile = "short_K562_Hi-C_chr_22.txt" #sys.argv[3] # Contact file in juicer short format 
 
 '''
 in my case: 
@@ -20,7 +21,7 @@ tssFile = Promoters file (dREG peaks less than 100 bps from a GeneCode TSS)
 conFile = Contact file in juicer short format
 '''
 
-out = open(sys.argv[4], "w")
+out = "test_put.txt" #open(sys.argv[4], "w")
 
 
 DIST = 300000 # Search window length
@@ -39,9 +40,7 @@ The following loop fills up the list of loci surrounding peaks and adds empty li
 positions in thelist of contacts and promoters to list those contacts and TSSs that falls within these loci
 '''
 for locus in open(peakFile): # locus line format: <chr>\t<position = center of peak>
-
-    locus = locus.strip()
-    locus = locus.split()
+    locus = locus.strip().split()
     if int(locus[1]) >= DIST:
         start = int(locus[1]) - DIST
     else:
@@ -53,7 +52,7 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     
 # Get TSSs from file
 
-print str(sys.argv[4])[-6:-4], "Sorting Promoters"
+print out[-6:-4], "Sorting Promoters"
 
 '''
 The following loop assign promoters to loci surrounding peaks so that each promoter
@@ -64,7 +63,6 @@ for tss in open(tssFile): # TSS line format: <chr>\t<position = center of TSS pe
     split = tss.strip()
     split = tss.split()
     chrom, pos = split[0], int(split[1])
-
     for i in range(len(loci)):
         if chrom == loci[i][0]:
             if loci[i][1] < pos < loci[i][2]:
@@ -74,60 +72,119 @@ for tss in open(tssFile): # TSS line format: <chr>\t<position = center of TSS pe
     if i%100 == 0: 
         print ct
 
-print str(sys.argv[4])[-6:-4], "Scanning",len(loci),"loci for interactions!"
+print out[-6:-4], "Scanning",len(loci),"loci for interactions!"
 
 '''
 The following loop writes all contacts into a list as such: side1chr, side1pos, side2chr, side2pos
 '''
 # Make sure that the Juicer file format matches the line format as described here (short format):
 # <str1> <chr1> <pos1> <frag1> <str2> <chr2> <pos2> <frag2>
-rowNumber = 0
-for line in open(conFile):
+def getconList(conList):
+    start = time.time()
+    rowNumber = 0
+    with open(conFile) as f:
+        for line in f:
+            rowNumber += 1
+            if rowNumber%100000 == 0: 
+                print out[-6:-4], rowNumber, time.time() - start
+            split = line.split()
+            chromo1 = split[1].strip("chr")
+            chromo2 = split[5].strip("chr")
+            p1 = int(split[2])
+            p2 = int(split[6])
+            #if chromo1 == chromo2:  # no need to compare if only use contact file from one chromosome
+            conList.append([chromo1,min(p1,p2),chromo2,max(p1,p2)])
+    print "rowNumber = ", rowNumber
 
-    rowNumber += 1
-        
-    if rowNumber%100000 == 0: 
-        print str(sys.argv[4])[-6:-4], rowNumber
 
-    split = line.split()
 
-    chromo1 = split[1]
-    if chromo1[:3] == 'chr': chromo1 = chromo1[3:]
-    chromo2 = split[5]
-    if chromo2[:3] == 'chr': chromo2 = chromo2[3:]
-    if chromo1 == chromo2:
-        if int(split[2]) <= int(split[6]):
-            conList.append([chromo1,split[2],chromo2,split[6]])
-        else:
-            conList.append([chromo2,split[6],chromo1,split[2]])
 
-print str(sys.argv[4])[-6:-4], 'scanning', len(conList), 'contacts, to keep only contacts around loci'
+def getconListFromPreprocessedFile(conList):
+    # input file: only contacts from the SAME chromosome
+    start = time.time()
+    rowNumber = 0
+    with open(conFile) as f:
+        for line in f:
+            rowNumber += 1
+            if rowNumber%100000 == 0: 
+                print out[-6:-4], rowNumber, time.time() - start
+            conList.append(line.split())
+    print "rowNumber = ", rowNumber
+
+
+def getconListInLoci(conList):
+    # input file: only contacts from the SAME chromosome
+    start = time.time()
+    rowNumber = 0
+    with open(conFile) as f:
+        for line in f:
+            rowNumber += 1
+            if rowNumber%100000 == 0: 
+                print out[-6:-4], rowNumber, time.time() - start
+            split = line.split()
+            chromo1 = split[1].strip("chr")
+            chromo2 = split[5].strip("chr")
+            p1 = int(split[2])
+            p2 = int(split[6])
+            #if chromo1 == chromo2:  # no need to compare if only use contact file from one chromosome
+            #conList.append([chromo1,min(p1,p2),chromo2,max(p1,p2)])
+            pos1 = min(p1,p2)
+            pos2 = max(p1,p2)
+            chr1 = 'chr'+chromo1
+            chr2 = 'chr'+chromo2
+            
+            for i in range(len(loci)):
+                #if chr1 == loci[i][0]:
+                if (int(loci[i][1]) <= pos1) and (pos1 <= int(loci[i][2])):
+                    contacts[i].append([chr1,pos1,pos2])
+                elif (int(loci[i][1]) <= pos2) and (pos2 <= int(loci[i][2])): 
+                    contacts[i].append([chr1,pos1,pos2])
+            ce += 1
+            if ce%100000 == 0: 
+                print out[-6:-4], 'contacts to loci', ce, time.time() - start
+    print out[-6:-4], 'contacts to loci', ce, 'out of', rowNumber,
+    print "time spent:", time.time() - start
+
+
+
+
+getconList(conList)  
+#getconListFromPreprocessedFile(conList)  # use bash script to preprocess the input Contact file 
+sys.getsizeof(conList)
+
+
+print out[-6:-4], 'scanning', len(conList), 'contacts, to keep only contacts around loci'
 # only keep contacts around loci
 '''
 The following loop assign to every locus around a peak, all the contacts that falls within it # this takes days to do, the assignement
 '''
+
+start = time.time()
 ce = 0
 for entry in conList: 
-    
     chr1,pos1,chr2,pos2 = 'chr' + str(entry[0]),int(entry[1]),'chr' + str(entry[2]),int(entry[3])
     for i in range(len(loci)):
         if chr1 == loci[i][0] and (int(loci[i][1]) <= pos1 <= int(loci[i][2])):
             contacts[i].append([chr1,pos1,pos2])
-        elif chr1 == loci[i][0] and (int(loci[i][1]) <= pos2 <= int(loci[i][2])):
+        elif chr1 == loci[i][0] and (int(loci[i][1]) <= pos2 <= int(loci[i][2])):  #should be chr2 instead of chr1???
             contacts[i].append([chr1,pos1,pos2])
     ce += 1
     if ce%100000 == 0: 
-        print str(sys.argv[4])[-6:-4], 'contacts to loci', ce, 'out of', len(conList)
-# Calculate observed and expected distributions for each locus 
+        print out[-6:-4], 'contacts to loci', ce, 'out of', len(conList), time.time() - start
 
+end = time.time()
+print(end - start)
+sys.getsizeof(conList) 
+sys.getsizeof(contacts) 
+
+# Calculate observed and expected distributions for each locus 
 print 'Analyzing', len(loci), 'loci'
 counter = 0
 for locus in open(peakFile): # locus line format: <chr>\t<position = center of peak>
     expect, plus, minus = [],[],[]
     locus = locus.strip().split()
     chrom, position = locus[0], int(locus[1])
-    if chrom[:3] == 'chr':
-        chrom = chrom[3:]
+    chrom = chrom.strip("chr")
     # Calculate parameters for expected distribution
     for contact in contacts[counter]:
         distance = int(contact[2]) - int(contact[1])
@@ -253,10 +310,10 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
         
     counter += 1
     if counter%100000 == 0:
-        print str(sys.argv[4])[-6:-4], 'main loop', counter
+        print out[-6:-4], 'main loop', counter
     
 corrected = mt.multipletests(pvalues, method='fdr_bh')
-print 'writing', str(sys.argv[4])[-6:-4]
+print 'writing', out[-6:-4]
 p_count = 0
 for prob in contactProbabilities:
     outStr = str('chr' + str(prob[0])) +"\t"+ 'distal' + "\t" + str(prob[1]) +"\t"+ 'proximal' +"\t"+ str(prob[3]) +"\t"+ str(prob[4]) +"\t"+ str(prob[5]) +"\t"+ str(prob[6]) +"\t"+ str(prob[7]) +"\t"+ str(corrected[1][p_count]) +"\n"
