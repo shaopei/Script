@@ -1,5 +1,6 @@
 import sys
 import time
+import numpy as np
 import statsmodels.stats.multitest as mt
 from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import IntVector as ivect
@@ -13,7 +14,7 @@ base = importr('base')
 peakFile = "TRE_file_chr_22.txt" #sys.argv[1] # File of "bait" peaks to analyze (format: Chromosome <\t> peak-center-position)
 tssFile = "promoter_file_chr_22.txt"  # sys.argv[2] # File of "prey" TSSs to analyze (format: Chromosome <\t> TSS-center-position)
 conFile = "short_K562_Hi-C_chr_22.txt" #sys.argv[3] # Contact file in juicer short format 
-
+temp_contact_file = conFile+"_temp"
 '''
 in my case: 
 peakfile = All dREG peaks file
@@ -34,17 +35,14 @@ f = robjects.r["exp"]
 loci, contacts, peaks, TSSs, conList, contactProbabilities, pvalues = [],[],[],[],[],[],[]
 
 print "Getting loci for contact analysis"
-
-'''
-The following loop fills up the list of loci surrounding peaks and adds empty list to their corresponding 
-positions in thelist of contacts and promoters to list those contacts and TSSs that falls within these loci
-'''
+#
+#'''
+#The following loop fills up the list of loci surrounding peaks and adds empty list to their corresponding 
+#positions in thelist of contacts and promoters to list those contacts and TSSs that falls within these loci
+#'''
 for locus in open(peakFile): # locus line format: <chr>\t<position = center of peak>
     locus = locus.strip().split()
-    if int(locus[1]) >= DIST:
-        start = int(locus[1]) - DIST
-    else:
-        start = 0
+    start = max(0, int(locus[1]) - DIST)
     stop = int(locus[1]) + DIST
     loci.append((locus[0],start,stop,int(locus[1])))
     contacts.append([])
@@ -54,14 +52,13 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
 
 print out[-6:-4], "Sorting Promoters"
 
-'''
-The following loop assign promoters to loci surrounding peaks so that each promoter
-is writen as its distance from the center of the peak, the chromosome and its position
-'''
+#'''
+#The following loop assign promoters to loci surrounding peaks so that each promoter
+#is writen as its distance from the center of the peak, the chromosome and its position
+#'''
 ct = 0
 for tss in open(tssFile): # TSS line format: <chr>\t<position = center of TSS peak>
-    split = tss.strip()
-    split = tss.split()
+    split = tss.strip().split()
     chrom, pos = split[0], int(split[1])
     for i in range(len(loci)):
         if chrom == loci[i][0]:
@@ -74,9 +71,9 @@ for tss in open(tssFile): # TSS line format: <chr>\t<position = center of TSS pe
 
 print out[-6:-4], "Scanning",len(loci),"loci for interactions!"
 
-'''
-The following loop writes all contacts into a list as such: side1chr, side1pos, side2chr, side2pos
-'''
+#'''
+#The following loop writes all contacts into a list as such: side1chr, side1pos, side2chr, side2pos
+#'''
 # Make sure that the Juicer file format matches the line format as described here (short format):
 # <str1> <chr1> <pos1> <frag1> <str2> <chr2> <pos2> <frag2>
 def getconList(conList):
@@ -146,17 +143,92 @@ def getconListInLoci(conList):
     print "time spent:", time.time() - start
 
 
+def getconListInLoci_v2():
+    # input file: only contacts from the SAME chromosome
+    start = time.time()
+    rowNumber = 0
+    ce = 0
+    loci_start = np.array(loci)[:,1].astype(int)
+    loci_stop = np.array(loci)[:,2].astype(int)
+    with open(conFile) as f:
+        for line in f:
+            rowNumber += 1
+            if rowNumber%100000 == 0: 
+                print out[-6:-4], "rowNumber in Contact file",rowNumber, time.time() - start
+            split = line.split()
+            chromo1 = split[1].strip("chr")
+            chromo2 = split[5].strip("chr")
+            p1 = int(split[2])
+            p2 = int(split[6])
+            #if chromo1 == chromo2:  # no need to compare if only use contact file from one chromosome
+            #conList.append([chromo1,min(p1,p2),chromo2,max(p1,p2)])
+            pos1 = min(p1,p2)
+            pos2 = max(p1,p2)
+            chr1 = 'chr'+chromo1
+            chr2 = 'chr'+chromo2
+            pos1_in = np.logical_and(loci_start <= pos1, pos1<= loci_stop)
+            pos2_in = np.logical_and(loci_start <= pos2, pos2<= loci_stop)
+            if sum(np.logical_or(pos1_in, pos2_in)) > 0:
+                for i in np.where(np.logical_or(pos1_in, pos2_in))[0]:
+                    contacts[i].append([chr1,pos1,pos2])
+                    ce += 1
+                    if ce%100000 == 0: 
+                        print out[-6:-4], 'contacts to loci', ce, time.time() - start
+    print out[-6:-4], 'contacts to loci', ce, 'out of', rowNumber,
+    print "time spent:", time.time() - start
 
 
-getconList(conList)  
-#getconListFromPreprocessedFile(conList)  # use bash script to preprocess the input Contact file 
-sys.getsizeof(conList)
+getconListInLoci_v2()
+
+def getconListInLoci_v3():
+    # input file: only contacts from the SAME chromosome
+    start = time.time()
+    rowNumber = 0
+    ce = 0
+    loci_start = np.array(loci)[:,1].astype(int)
+    loci_stop = np.array(loci)[:,2].astype(int)
+    with open(conFile) as f:
+        with open(temp_contact_file, "w") as tmp:
+            for line in f:
+                rowNumber += 1
+                if rowNumber%100000 == 0: 
+                    print out[-6:-4], "rowNumber in Contact file",rowNumber, time.time() - start
+                split = line.split()
+                chromo1 = split[1].strip("chr")
+                chromo2 = split[5].strip("chr")
+                p1 = int(split[2])
+                p2 = int(split[6])
+                #if chromo1 == chromo2:  # no need to compare if only use contact file from one chromosome
+                #conList.append([chromo1,min(p1,p2),chromo2,max(p1,p2)])
+                pos1 = min(p1,p2)
+                pos2 = max(p1,p2)
+                chr1 = 'chr'+chromo1
+                chr2 = 'chr'+chromo2
+                pos1_in = np.logical_and(loci_start <= pos1, pos1<= loci_stop)
+                pos2_in = np.logical_and(loci_start <= pos2, pos2<= loci_stop)
+                if sum(np.logical_or(pos1_in, pos2_in)) > 0:
+                    for i in np.where(np.logical_or(pos1_in, pos2_in))[0]:
+                        #contacts[i].append([chr1,pos1,pos2])
+                        tmp.write("\t".join([str(i),chr1,str(pos1),str(pos2)]))
+                        tmp.write("\n")
+                        ce += 1
+                        if ce%100000 == 0: 
+                            print out[-6:-4], 'contacts to loci', ce, time.time() - start
+    print out[-6:-4], 'contacts to loci', ce, 'out of', rowNumber,
+    print "time spent:", time.time() - start
+
+getconListInLoci_v3()
+
+#temp_contact_file = "temp_test.txt"
+import os
+myCmd = "cat "+ temp_contact_file+" | LC_ALL=C sort -k1,1n -k2,3n --parallel=30 > " + temp_contact_file+"_sorted"
+os.system(myCmd)
 
 
 print out[-6:-4], 'scanning', len(conList), 'contacts, to keep only contacts around loci'
 # only keep contacts around loci
 '''
-The following loop assign to every locus around a peak, all the contacts that falls within it # this takes days to do, the assignement
+The following loop assign to every locus around a peak, all the contacts that falls within it
 '''
 
 start = time.time()
