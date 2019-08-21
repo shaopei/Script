@@ -25,10 +25,13 @@ rm ${conFile}_IN_${peakFile} -r
 mkdir ${conFile}_IN_${peakFile}_folder
 while read index chr start end center; do
   echo $index $chr $start $end $center
-  cat ${conFile}_temp1 | awk -v s=$start -v e=$end -v i=$index -v f=${conFile}_IN_${peakFile}_folder/temp_${index} 'BEGIN{OFS="\t"} ((s<=$2 && $2<=e) || (s<=$4 && $4<=e)){print i, $1, $2, $4 > f}' 
+  cat ${conFile}_temp1 | awk -v s=$start -v e=$end -v i=$index -v f=${conFile}_IN_${peakFile}_folder/temp_${index} 'BEGIN{OFS="\t"} ((s<=$2 && $2<=e) || (s<=$4 && $4<=e)){print i, $1, $2, $4 > f}' &
 done <${peakFile}_temp1
 
+wait
 python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
 
 # remove intermediate files
- rm ${conFile}_IN_${peakFile} -r
+rm ${conFile}_temp1
+rm ${peakFile}_temp1
+gzip ${conFile}_IN_${peakFile}/*
