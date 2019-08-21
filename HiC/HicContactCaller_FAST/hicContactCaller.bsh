@@ -21,15 +21,26 @@ cat $conFile | awk 'BEGIN{OFS=" "} ($3<=$7 && $2==$6) {print $2, $3, $6, $7}; ($
 
 wait
 
+wait_a_second() {
+  joblist=($(jobs -p))
+    while (( ${#joblist[*]} >= 50 ))
+      do
+      sleep 1
+      joblist=($(jobs -p))
+  done
+}
+
+
 rm ${conFile}_IN_${peakFile} -r
 mkdir ${conFile}_IN_${peakFile}_folder
 while read index chr start end center; do
   echo $index $chr $start $end $center
   cat ${conFile}_temp1 | awk -v s=$start -v e=$end -v i=$index -v f=${conFile}_IN_${peakFile}_folder/temp_${index} 'BEGIN{OFS="\t"} ((s<=$2 && $2<=e) || (s<=$4 && $4<=e)){print i, $1, $2, $4 > f}' &
+  wait_a_second
 done <${peakFile}_temp1
 
 wait
-python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
+#python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
 
 # remove intermediate files
 rm ${conFile}_temp1
