@@ -31,7 +31,7 @@ wait_a_second() {
 }
 
 
-rm ${conFile}_IN_${peakFile} -r
+rm ${conFile}_IN_${peakFile}_folder -r
 mkdir ${conFile}_IN_${peakFile}_folder
 while read index chr start end center; do
   echo $index $chr $start $end $center
