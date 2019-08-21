@@ -1,0 +1,24 @@
+# bash hicContactCaller.bsh TRE_file_chr_21.txt promoter_file_chr_21.txt short_K562_Hi-C_chr_21.txt
+
+peakFile=$1 #TRE_file_chr_22.txt #sys.argv[1] # File of "bait" peaks to analyze (format: Chromosome <\t> peak-center-position)
+tssFile=$2 #promoter_file_chr_22.txt  # sys.argv[2] # File of "prey" TSSs to analyze (format: Chromosome <\t> TSS-center-position)
+conFile=$3 #short_K562_Hi-C_chr_22.txt #sys.argv[3] # Contact file in juicer short format 
+outputFile=$4
+DIST=300000 # Search window length
+
+
+cat $peakFile | awk -v d=$DIST 'BEGIN{OFS="\t"} ($2 >= d) {print NR-1, $1, $2-d, $2+d, $2} ($2 < d) {print NR-1, $1, 0,$2+d, $2}' > ${peakFile}_temp1 &
+
+cat $conFile | awk 'BEGIN{OFS=" "} ($3<=$7 && $2==$6) {print $2, $3, $6, $7}; ($3>$7 && $2==$6) {print $2, $7, $6, $3}'  \
+|awk 'BEGIN{OFS=" "} (substr($1,1,3)=="chr"){split($1,a,"chr"); split($3,b,"chr"); print a[2], $2, b[2], $4} (substr($1,1,3)!="chr") {print $0}' \
+|awk 'BEGIN{OFS=" "} {print "chr"$1, $2, "chr"$3, $4}' > ${conFile}_temp1 &
+
+wait
+#rm ${conFile}_IN_${peakFile} -r
+mkdir ${conFile}_IN_${peakFile}_folder
+while read index chr start end center; do
+  echo $index $chr $start $end $center
+  cat ${conFile}_temp1 | awk -v s=$start -v e=$end -v i=$index -v f=${conFile}_IN_${peakFile}_folder/temp_${index} 'BEGIN{OFS="\t"} ((s<=$2 && $2<=e) || (s<=$4 && $4<=e)){print i, $1, $2, $4 > f}' 
+done <${peakFile}_temp1
+
+python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
