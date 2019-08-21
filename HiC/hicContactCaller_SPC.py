@@ -132,18 +132,19 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     chrom = chrom.strip("chr")
     
     # read the contacts around loci from the splited temp_contact_file
-    with open(temp_contact_file+"folder/temp_"+str(counter)) as contact_fp:
-        contacts= [l.strip().split() for l in contact_fp.readlines()]
-    
+    try:
+        with open(temp_contact_file+"folder/temp_"+str(counter)) as contact_fp:
+            contacts= [l.strip().split() for l in contact_fp.readlines()]
+    except IOError:
+        contacts= []
     # Calculate parameters for expected distribution
     for contact in contacts:
         distance = int(contact[2]) - int(contact[1])
         expect.append(distance)
-
-
+    print len(expect)
     if len(expect) < 1:
         expect.append(1)
-
+        
     empDist = ivect(expect)
     robjects.r.assign("empDist",empDist)
     
