@@ -14,7 +14,8 @@ cat $conFile | awk 'BEGIN{OFS=" "} ($3<=$7 && $2==$6) {print $2, $3, $6, $7}; ($
 |awk 'BEGIN{OFS=" "} {print "chr"$1, $2, "chr"$3, $4}' > ${conFile}_temp1 &
 
 wait
-#rm ${conFile}_IN_${peakFile} -r
+
+rm ${conFile}_IN_${peakFile} -r
 mkdir ${conFile}_IN_${peakFile}_folder
 while read index chr start end center; do
   echo $index $chr $start $end $center
@@ -22,3 +23,6 @@ while read index chr start end center; do
 done <${peakFile}_temp1
 
 python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
+
+# remove intermediate files
+rm ${conFile}_IN_${peakFile} -r
