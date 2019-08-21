@@ -1,4 +1,4 @@
-# bash hicContactCaller.bsh TRE_file_chr_21.txt promoter_file_chr_21.txt short_K562_Hi-C_chr_21.txt My_proseq_output-$(date +"%m_%d_%Y")
+# bash hicContactCaller.bsh TRE_file_chr_21.txt promoter_file_chr_21.txt short_K562_Hi-C_chr_21.txt My_output-$(date +"%m_%d_%Y")
 echo Please note, this only work for files that are from the SAME chromosome.
 
 peakFile=$1 #TRE_file_chr_22.txt #sys.argv[1] # File of "bait" peaks to analyze (format: Chromosome <\t> peak-center-position)
