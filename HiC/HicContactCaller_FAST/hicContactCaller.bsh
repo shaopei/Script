@@ -45,4 +45,4 @@ python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputF
 # remove intermediate files
 rm ${conFile}_temp1
 rm ${peakFile}_temp1
-gzip ${conFile}_IN_${peakFile}/*
+gzip ${conFile}_IN_${peakFile}_folder/*
