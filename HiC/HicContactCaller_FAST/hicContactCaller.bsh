@@ -23,7 +23,7 @@ wait
 
 wait_a_second() {
   joblist=($(jobs -p))
-    while (( ${#joblist[*]} >= 50 ))
+    while (( ${#joblist[*]} >= 30 ))
       do
       sleep 1
       joblist=($(jobs -p))
@@ -40,7 +40,7 @@ while read index chr start end center; do
 done <${peakFile}_temp1
 
 wait
-#python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
+python hicContactCaller_WorkWithBash_SPC.py $peakFile $tssFile $conFile $outputFile $DIST
 
 # remove intermediate files
 rm ${conFile}_temp1
