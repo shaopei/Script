@@ -107,9 +107,9 @@ def getconListInLoci_v3():
                         #contacts[i].append([chr1,pos1,pos2])
                         tmp.write("\t".join([str(i),chr1,str(pos1),str(pos2)]))
                         tmp.write("\n")
-                        ce += 1
-                        if ce%100000 == 0: 
-                            print out[-6:-4], 'contacts to loci', ce, time.time() - start
+                    ce += 1
+                    if ce%100000 == 0: 
+                        print out[-6:-4], 'contacts to loci', ce, time.time() - start
     print out[-6:-4], 'contacts to loci', ce, 'out of', rowNumber,
     print "time spent:", time.time() - start
 
@@ -141,7 +141,6 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     for contact in contacts:
         distance = int(contact[2]) - int(contact[1])
         expect.append(distance)
-    print len(expect)
     if len(expect) < 1:
         expect.append(1)
         
