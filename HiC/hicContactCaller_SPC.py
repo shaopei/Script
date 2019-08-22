@@ -270,3 +270,6 @@ for prob in contactProbabilities:
     outStr = str('chr' + str(prob[0])) +"\t"+ 'distal' + "\t" + str(prob[1]) +"\t"+ 'proximal' +"\t"+ str(prob[3]) +"\t"+ str(prob[4]) +"\t"+ str(prob[5]) +"\t"+ str(prob[6]) +"\t"+ str(prob[7]) +"\t"+ str(corrected[1][p_count]) +"\n"
     out.write(outStr)
     p_count += 1
+
+# remove intermediate files
+os.system('rm -r '+temp_contact_file+'*')
