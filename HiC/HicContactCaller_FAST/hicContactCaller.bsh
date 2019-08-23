@@ -30,7 +30,7 @@ wait
 
 wait_a_second() {
   joblist=($(jobs -p))
-    while (( ${#joblist[*]} >= 30 ))
+    while (( ${#joblist[*]} >= 60 ))
       do
       sleep 1
       joblist=($(jobs -p))
