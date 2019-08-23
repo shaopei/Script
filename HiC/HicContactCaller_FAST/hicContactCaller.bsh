@@ -42,7 +42,7 @@ rm ${conFile}_IN_${peakFile}_folder -r
 mkdir ${conFile}_IN_${peakFile}_folder
 while read index chr start end center; do
   echo $index $chr $start $end $center
-  nice cat ${conFile}_temp1 | nice awk -v s=$start -v e=$end -v i=$index -v f=${conFile}_IN_${peakFile}_folder/temp_${index} 'BEGIN{OFS="\t"} ((s<=$2 && $2<=e) || (s<=$4 && $4<=e)){print i, $1, $2, $4 > f}' &
+  nice cat ${conFile}_temp1 | nice -n 19 awk -v s=$start -v e=$end -v i=$index -v f=${conFile}_IN_${peakFile}_folder/temp_${index} 'BEGIN{OFS="\t"} ((s<=$2 && $2<=e) || (s<=$4 && $4<=e)){print i, $1, $2, $4 > f}' &
   wait_a_second
 done <${peakFile}_temp1
 
