@@ -5,6 +5,7 @@ from rpy2.robjects.packages import importr
 from rpy2.robjects.vectors import IntVector as ivect
 import rpy2.robjects as robjects
 import rpy2
+import gzip
 
 mass = importr('MASS')
 stats = importr('stats')
@@ -84,7 +85,8 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     
     # read the contacts around loci from the splited temp_contact_file
     try:
-        with open(conFile+"_IN_"+peakFile+"_folder/temp_"+str(counter)) as contact_fp:
+        with gzip.open(conFile+"_IN_"+peakFile+"_folder/temp_"+str(counter)+".gz") as contact_fp:
+        #with open(conFile+"_IN_"+peakFile+"_folder/temp_"+str(counter)) as contact_fp:
             contacts= np.array([l.strip().split() for l in contact_fp.readlines()])
             print "contacts with locus number", contacts[0][0]
             contacts = contacts[:,1:4]
