@@ -25,7 +25,7 @@ conFile = Contact file in juicer short format
 out = sys.argv[4]
 
 
-DIST = sys.argv[5] #300000 # Search window length
+DIST = 300000 #300000 # Search window length
 CAP = 2500 # Capture window around locus
 
 f = robjects.r["exp"]
@@ -109,10 +109,10 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     # Get all plus and minus diractions distances of interactions with positions within a 5kb (CAP*2) window from (+ and -) the peak's center
     for contact in contacts:
         if baitStart <= int(contact[1]) <= baitStop:
-            distance = contact[2]-contact[1]
+            distance = int(contact[2])-int(contact[1])
             plus.append(distance)
         if baitStart <= int(contact[2]) <= baitStop:
-            distance = contact[2]-contact[1]
+            distance = int(contact[2])-int(contact[1])
             minus.append(distance)
             
     #print 'plus length is:',len(plus), 'minus length is:', len(minus)
@@ -215,9 +215,10 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     if counter%100000 == 0:
         print out[-6:-4], 'main loop', counter
     
+out = open(sys.argv[4], "w")
 
 corrected = mt.multipletests(pvalues, method='fdr_bh')
-print 'writing', out[-6:-4]
+print 'writing'
 p_count = 0
 for prob in contactProbabilities:
     outStr = str('chr' + str(prob[0])) +"\t"+ 'distal' + "\t" + str(prob[1]) +"\t"+ 'proximal' +"\t"+ str(prob[3]) +"\t"+ str(prob[4]) +"\t"+ str(prob[5]) +"\t"+ str(prob[6]) +"\t"+ str(prob[7]) +"\t"+ str(corrected[1][p_count]) +"\n"
