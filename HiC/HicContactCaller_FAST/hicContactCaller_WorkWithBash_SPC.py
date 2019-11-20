@@ -25,7 +25,7 @@ conFile = Contact file in juicer short format
 out = sys.argv[4]
 
 
-DIST = int(sys.argv[5]) #300000 # Search window length
+DIST = 300000 #300000 # Search window length
 CAP = 2500 # Capture window around locus
 
 f = robjects.r["exp"]
@@ -215,13 +215,13 @@ for locus in open(peakFile): # locus line format: <chr>\t<position = center of p
     if counter%100000 == 0:
         print out[-6:-4], 'main loop', counter
     
+out = open(sys.argv[4], "w")
 
 corrected = mt.multipletests(pvalues, method='fdr_bh')
 print 'writing'
 p_count = 0
-with open(sys.argv[4], "w") as out:
-    for prob in contactProbabilities:
-        outStr = str('chr' + str(prob[0])) +"\t"+ 'distal' + "\t" + str(prob[1]) +"\t"+ 'proximal' +"\t"+ str(prob[3]) +"\t"+ str(prob[4]) +"\t"+ str(prob[5]) +"\t"+ str(prob[6]) +"\t"+ str(prob[7]) +"\t"+ str(corrected[1][p_count]) +"\n"
-        out.write(outStr)
-        p_count += 1
+for prob in contactProbabilities:
+    outStr = str('chr' + str(prob[0])) +"\t"+ 'distal' + "\t" + str(prob[1]) +"\t"+ 'proximal' +"\t"+ str(prob[3]) +"\t"+ str(prob[4]) +"\t"+ str(prob[5]) +"\t"+ str(prob[6]) +"\t"+ str(prob[7]) +"\t"+ str(corrected[1][p_count]) +"\n"
+    out.write(outStr)
+    p_count += 1
 
